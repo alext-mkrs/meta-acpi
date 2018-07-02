@@ -10,10 +10,27 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/BSD;md5=377548
 
 DEPENDS = "acpica-native"
 
+FILESEXTRAPATHS_prepend := "${THISDIR}/files/:"
+SRC_URI = "\
+	file://acpi-tables-load.service \
+	file://acpi-tables-load \
+"
+
+B = "${WORKDIR}/acpi-tables"
+
 inherit deploy
+
+RDEPENDS_${PN} = "${@bb.utils.contains('DISTRO_FEATURES', 'acpi', 'libgpiod', '', d)}"
 
 ACPI_TABLES ?= ""
 ACPI_TABLES[doc] = "List of ACPI tables to include with the initrd"
+ACPI_FEATURES ?= "uart_2w spi i2c"
+IASLCC = " \
+    ${@bb.utils.contains('ACPI_FEATURES', 'uart_2w', '-D MUX_UART_2WIRE', '', d)} \
+    ${@bb.utils.contains('ACPI_FEATURES', 'uart_4w', '-D MUX_UART_4WIRE', '', d)} \
+    ${@bb.utils.contains('ACPI_FEATURES', 'i2c', '-D MUX_I2C', '', d)} \
+    ${@bb.utils.contains('ACPI_FEATURES', 'spi', '-D MUX_SPI', '', d)} \
+"
 
 do_compile() {
 	# Always clean up the existing tables
@@ -32,9 +49,28 @@ do_compile() {
 
 		dest_table=$(basename $table)
 		bbdebug 1 "Including ACPI table: ${table}"
-		iasl -p ${WORKDIR}/acpi-tables/kernel/firmware/acpi/$dest_table $table
+		bbdebug 1 "Setting iasl compiler defines: ${IASLCC}"
+		iasl ${IASLCC} -p ${WORKDIR}/acpi-tables/kernel/firmware/acpi/$dest_table $table
 	done
 }
+
+do_install() {
+
+	install -d ${D}/kernel/firmware/acpi
+	for table in ${ACPI_TABLES}; do
+		dest_table=$(basename $table asl)
+		install -m 644 ${B}/kernel/firmware/acpi/${dest_table}aml ${D}/kernel/firmware/acpi/${dest_table}aml
+	done
+	install -d ${D}${bindir}
+	install -m 0755 ${WORKDIR}/acpi-tables-load ${D}${bindir}
+	install -d ${D}/${systemd_unitdir}/system
+        install -m 644 ${WORKDIR}/acpi-tables-load.service ${D}/${systemd_unitdir}/system
+
+}
+
+FILES_${PN} = "/kernel/firmware/acpi"
+FILES_${PN} += "${systemd_unitdir}/system/*"
+FILES_${PN} += "${bindir}/*"
 
 do_deploy() {
 	cd ${WORKDIR}/acpi-tables

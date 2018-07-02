@@ -1,14 +1,7 @@
 /*
- * Intel Galileo
+ * Intel Edison
  *
- * This muxes UART0 from following pins on Galileo J1B1 connector:
- *
- *   pin name       pin number
- *   -------------------------
- *   IO0/RX0        1
- *   IO1/TX0        2
- *
- * Copyright (C) 2016, Intel Corporation
+ * Copyright (C) 2017, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,8 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-DefinitionBlock ("gpiomux.aml", "SSDT", 5, "", "GPIOMUX", 1)
+DefinitionBlock ("arduino.aml", "SSDT", 5, "", "ARDUINO", 1)
 {
-    #define MUX_UART0
-    #include "gpiomux.asli"
+    #include "arduino.asli"
 }

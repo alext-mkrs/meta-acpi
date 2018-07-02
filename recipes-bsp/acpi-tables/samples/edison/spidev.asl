@@ -1,20 +1,13 @@
 /*
- * Intel Galileo
+ * Intel Edison
  *
- * This adds Atmel AT25 compatible EEPROM to the SPI host controller
- * available on Galileo J2B1 I/O connector:
+ * This adds raw SPI test device to the SPI host controller available on
+ * Edison I/O connector.
  *
- *   pin name       pin number
- *   -------------------------
- *   IO10/SS        3
- *   IO11/MOSI      4
- *   IO12/MISO      5
- *   IO13/SCK       6
- *
- * In Linux you need to set CONFIG_EEPROM_AT25=y (or m) to be able to use
+ * In Linux you need to set CONFIG_SPI_SPIDEV=y (or m) to be able to use
  * this device.
  *
- * Copyright (C) 2016, Intel Corporation
+ * Copyright (C) 2017, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,18 +27,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-DefinitionBlock ("at25.aml", "SSDT", 5, "", "AT25", 1)
+DefinitionBlock ("spidev.aml", "SSDT", 5, "", "SPIDEV", 1)
 {
-    #include "spi.asli"
+    External (_SB_.PCI0.SPI5, DeviceObj)
 
-    Scope (\_SB.PCI0.SPI1)
+    Scope (\_SB.PCI0.SPI5)
     {
-        Device (EEP0) {
-            Name (_HID, "PRP0001")
-            Name (_DDN, "Atmel AT25 compatible EEPROM")
+        Device (TP0)
+        {
+            Name (_HID, "SPT0001")
+            Name (_DDN, "SPI test device")
             Name (_CRS, ResourceTemplate () {
                 SpiSerialBus (
-                    0,                      // Chip select
+                    1,                      // Chip select
                     PolarityLow,            // Chip select is active low
                     FourWireMode,           // Full duplex
                     8,                      // Bits per word is 8 (byte)
@@ -53,23 +47,9 @@ DefinitionBlock ("at25.aml", "SSDT", 5, "", "AT25", 1)
                     1000000,                // 1 MHz
                     ClockPolarityLow,       // SPI mode 0
                     ClockPhaseFirst,        // SPI mode 0
-                    "\\_SB.PCI0.SPI1",      // SPI host controller
+                    "\\_SB.PCI0.SPI5",      // SPI host controller
                     0                       // Must be 0
                 )
-            })
-
-            /*
-             * See Documentation/devicetree/bindings/eeprom/at25.txt for
-             * more information about these bindings.
-             */
-            Name (_DSD, Package () {
-                ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-                Package () {
-                    Package () {"compatible", "atmel,at25"},
-                    Package () {"size", 1024},
-                    Package () {"pagesize", 32},
-                    Package () {"address-width", 16},
-                }
             })
         }
     }
